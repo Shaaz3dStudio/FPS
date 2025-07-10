@@ -1,0 +1,43 @@
+using UnityEditor.Timeline;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class deathScreen : MonoBehaviour
+{
+    public Image targetImage;
+    public Text targetText;
+    public float duration = 5f;
+    public bool showDeadScreen = false;
+    private float targetAlpha;
+    private float startAlpha;
+    private float elapsedTime = 0f;
+
+    private void Start()
+    {
+        targetAlpha = targetImage.color.a;
+    }
+
+    private void Update()
+    {
+        if (showDeadScreen)
+        {
+            if (elapsedTime < duration)
+            {
+                float newAlpha=Mathf.Lerp(startAlpha, targetAlpha, elapsedTime/duration);
+                Color newColor=targetImage.color;
+                newColor.a = newAlpha;
+                targetImage.color = newColor;
+
+                Color newTextAlpha = targetText.color;
+                newTextAlpha.a=newAlpha;
+                targetText.color = newTextAlpha;
+
+                elapsedTime += Time.deltaTime;
+            }
+            else
+            {
+                Time.timeScale = 0f;
+            }
+        }
+    }
+}
