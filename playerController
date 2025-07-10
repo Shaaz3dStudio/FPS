@@ -1,0 +1,121 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class Player : MonoBehaviour
+{
+    [Header("Player Health & Damage")]
+    private int maxHealth = 100;
+    public int currentHealth;
+    public Slider healthSlider;
+
+    //health slider
+    public deathScreen deathScreen;
+
+    [Header("Player Movement")]
+    public float movementSpeed = 5f;
+    public float jumpForce = 1.5f;
+    public CharacterController controller;
+    public float gravity = -9.81f;
+    public Transform groundCheck;
+    public LayerMask groundMask;
+    public float groundDistance = 0.4f;
+    private bool isGround;
+    private Vector3 velocity;
+
+    [Header("Foot Steps")]
+    public AudioSource leftfootAudio;
+    public AudioSource rightfootAudio;
+
+    public AudioClip[] footstepSounds;
+    public float footstepInterver = 0.5f;
+    private float nextFootstepTime;
+    private bool isLeftFootstep = true;
+
+
+    private void Start()
+    {
+        currentHealth = maxHealth;
+        healthSlider.minValue = 1;
+        healthSlider.maxValue = currentHealth;
+        healthSlider.value= currentHealth;
+        controller = GetComponent<CharacterController>();
+    }
+
+    private void Update()
+    {
+        isGround = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+
+        if (isGround && velocity.y < 0){
+            velocity.y = -2f;
+        }
+        HandleMovement();
+        HandleGravity();
+
+        //Handle footsteps sound
+        if (isGround && controller.velocity.magnitude > 0.1f && Time.time >= nextFootstepTime)
+        {
+            PlayerFootstepSound();
+            nextFootstepTime = Time.time + footstepInterver;
+        }
+
+        if (Input.GetButtonDown("Jump") && isGround)
+        {
+            velocity.y = Mathf.Sqrt(jumpForce * -2 * gravity);
+
+        }
+
+        controller.Move(velocity * Time.deltaTime);
+
+    }
+
+    void HandleMovement()
+    {
+        float horizontalInput = Input.GetAxis("Horizontal");
+        float verticalInput = Input.GetAxis("Vertical");
+
+        Vector3 movement = transform.right * horizontalInput + transform.forward * verticalInput;
+        movement.y = 0f;
+        controller.Move(movement * movementSpeed * Time.deltaTime);
+
+    }
+
+    void HandleGravity()
+    {
+        velocity.y += gravity * Time.deltaTime;
+    }
+
+    void PlayerFootstepSound()
+    {
+        AudioClip footstepClip = footstepSounds[Random.Range(0, footstepSounds.Length)];
+
+        if (isLeftFootstep)
+        {
+            leftfootAudio.PlayOneShot(footstepClip);
+        }
+        else
+        {
+            rightfootAudio.PlayOneShot(footstepClip);
+        }
+        isLeftFootstep = !isLeftFootstep;
+    }
+
+    public void TakeDamage(int damageAmount)
+    {
+        currentHealth -= damageAmount;
+        healthSlider.value -= damageAmount;
+        if(currentHealth <= 0)
+        {
+            currentHealth = 0;
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        deathScreen.showDeadScreen = true;
+        Debug.Log("Player Died");
+    }
+}
